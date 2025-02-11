@@ -26,6 +26,14 @@ Este projeto é do curso [Aprendizagem por Reforço com Deep Learning, PyTorch e
     pip install -r requirements.txt
     ```
 
+    ou se estiver utilizando anaconda
+
+    ``` bash
+    conda create -n nome_do_ambiente python=3.6.13
+    conda activate nome_do_ambiente
+    pip install -r requirements.txt
+    ```
+
 ## Uso
 
 1. Execute o script principal para iniciar a simulação:

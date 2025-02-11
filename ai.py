@@ -20,7 +20,7 @@ class Network(nn.Module):
         
         # neurons1 = 30
         
-        # 5 -> 30 -> 30 -> 3 - full connection (dense)
+        # 5 -> 50 -> 30 -> 3 - full connection (dense)
         self.fc1 = nn.Linear(input_size, 50)
         self.fc2 = nn.Linear(50, 30)
         self.fc3 = nn.Linear(30, nb_action)
@@ -65,19 +65,29 @@ class Dqn():
         return action.data[0,0]
     
     def learn(self, batch_state, batch_next_state, batch_reward, batch_action):
+        # Obtendo os valores de Q para cada ação desse estado
         outputs = self.model(batch_state).gather(1, batch_action.unsqueeze(1)).squeeze(1)
+        # Obtendo os valores de Q para o próximo estado (max Q) para cada ação
         next_outputs = self.model(batch_next_state).detach().max(1)[0]
+        # Calculando o target (Q_target) para cada ação, multiplicando o fator gamma, os valores das próximas ações e somando às recompensas
         target = self.gamma * next_outputs + batch_reward
+        # Calculando a função de custo (TD_loss) usando a função de custo de Smooth L1 Loss (L1 loss) entre os valores de Q e o target
         td_loss = F.smooth_l1_loss(outputs, target)
+        # Zerando os gradientes e realizando o backpropagation para ajustar os pesos da rede neural
         self.optimizer.zero_grad()
+        # Atualizando os pesos da rede neural com base na função de custo e realizando o backpropagation
         td_loss.backward(retain_graph=True)
+        # Atualizando os pesos da rede neural com base nos gradientes calculados pelo backpropagation
         self.optimizer.step()
         
     def update(self, reward, new_signal):
         new_state = torch.tensor(new_signal).float().unsqueeze(0)
+        
         self.memory.push((self.last_state, new_state, torch.LongTensor([int(self.last_action)]), 
                           torch.Tensor([self.last_reward])))
+        
         action = self.select_action(new_state)
+        
         if len(self.memory.memory) > 100:
             batch_state, batch_next_state, batch_action, batch_reward = self.memory.sample(100)
             self.learn(batch_state, batch_next_state, batch_reward, batch_action)
